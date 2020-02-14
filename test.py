@@ -1,18 +1,41 @@
 ############ IMPORTS #############
 import numpy as np
-from collections import Counter
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
-from sklearn.utils import shuffle
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
-from imblearn.over_sampling import SMOTE
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns; sns.set()
 import sys
+
+from collections import Counter
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, scale
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.feature_selection import SelectKBest, f_classif
+
+from sklearn.utils import shuffle
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
+
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import NearMiss
 ##################################
+
+
+class Model:
+	'''
+	This class holds all the data for a specific Model
+	'''
+	def __init__(self, modelName, model):
+		self.modelName = modelName
+		self.model = model
+		self.accuracy = -1
+		self.precision = -1
+		self.recall = -1
+		self.roc_auc = -1
+
 
 
 def extract_data(file):
@@ -32,9 +55,9 @@ def split_matrix_vector(dataset):
 	
 	Return value: X Matrix, y Vector
 	'''
-	# print(dataset)
 	y = np.asarray(dataset['Hazardous'])
 	X = np.asarray(dataset.drop('Hazardous',1))
+	X = rescale_data(X)
 	return X, y
 
 
@@ -46,8 +69,8 @@ def shuffle_and_split_train_test(X, y, features):
 	'''
 	obj = { }
 	for i in range(len(features)-1):
-		print("feature: {}".format(features[i]))
-		print("values: {}".format(X[:, i]))
+		# print("feature: {}".format(features[i]))
+		# print("values: {}".format(X[:, i]))
 		obj[features[i]] = X[:, i]
 	
 	obj[len(features)] = y[i]
@@ -62,21 +85,55 @@ def rescale_data(data):
 	'''
 	Rescale data to standard distribution
 	'''
-	return StandardScaler().fit_transform(data)
+	return scale(data)
+	# return StandardScaler().fit_transform(data)
 
 
 def main():
 	df = extract_data('./dataset/nasa.csv')
+	df = shuffle(df)
 	features = df.columns.values
-	print(features)
 
 	# Split to X-Matrix and y-Vector
 	X, y = split_matrix_vector(df)
 	print("Original dataset shape: {}".format(Counter(y)))
-	sm = SMOTE(random_state=42)
+	print("Number of samples: {}".format(X.shape[0]))
+	print("Number of features: {}".format(X.shape[1]))
+	print("Ratio between classes: {}".format(y[y == True].shape[0] / y[y == False].shape[0]))
+	
+	# Upscale data with SMOTE algorithm - ratio between classes is 1:2
+	# For example: over 2 samples of non-hazardous asteroids there is 1 sample of hazardous asteroid 
+	sm = SMOTE(sampling_strategy=0.5, random_state=42)
 	X_res, y_res = sm.fit_resample(X, y)
-	print("Resampled dataset shape: {}".format(Counter(y_res)))
-	X_train, X_test, y_train, y_test = shuffle_and_split_train_test(X_res, y_res, features)
+	print("Resampled dataset shape after SMOTE: {}".format(Counter(y_res)))
+	print("Number of samples: {}".format(X_res.shape[0]))
+	print("Number of features: {}".format(X_res.shape[1]))
+	print("Ratio between classes: {}".format(y_res[y_res == True].shape[0] / y_res[y_res == False].shape[0]))
+	
+	# Downscale data with NearMiss algorithm - ratio between classes is 1:1
+	nm = NearMiss()
+	X_res, y_res = nm.fit_resample(X_res, y_res)
+	print("Resampled dataset shape after NearMiss: {}".format(Counter(y_res)))
+	print("Number of samples: {}".format(X_res.shape[0]))
+	print("Number of features: {}".format(X_res.shape[1]))
+	print("Ratio between classes: {}".format(y_res[y_res == True].shape[0] / y_res[y_res == False].shape[0]))	
+
+
+	# Select the best 15 features that gives the best indication of y
+	X_res = SelectKBest(f_classif, k=15).fit_transform(X_res, y_res)
+	print("Dataset shape after feature selection: {}".format(Counter(y_res)))
+	print("Number of samples: {}".format(X_res.shape[0]))
+	print("Number of features: {}".format(X_res.shape[1]))
+	print("Ratio between classes: {}".format(y_res[y_res == True].shape[0] / y_res[y_res == False].shape[0]))
+
+
+	# Prepare models:
+	models = []
+	models.append(Model("LR", LogisticRegression(solver='liblinear', max_iter=10**6)))
+	models.append(Model("SVC", SVC(gamma='auto')))
+	models.append(Model("KNN", KNeighborsClassifier()))
+	models.append(Model("GNN", GaussianNB()))
+	models.append(Model("DT", DecisionTreeClassifier()))
 
 
 if __name__ == "__main__":
