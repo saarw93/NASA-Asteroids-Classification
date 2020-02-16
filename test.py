@@ -4,9 +4,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns; sns.set()
 import sys
+import scipy.stats as stats
+import math
 
 from collections import Counter
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import StandardScaler, scale
 
 from sklearn.linear_model import LogisticRegression
@@ -30,10 +32,10 @@ class Model:
 	def __init__(self, modelName, model):
 		self.modelName = modelName
 		self.model = model
-		self.accuracy = -1
-		self.precision = -1
-		self.recall = -1
-		self.roc_auc = -1
+		self.overall = 0
+
+	def calc_overall(self, overall, value):
+		self.overall = overall + value
 
 
 
@@ -100,6 +102,56 @@ def get_k_selected_features_names(indices, features):
 	return selected_features
 
 
+def compare_models(X, y, models):
+	'''
+	Input: X-Matrix, y-Vector, list of models to compare
+
+	Return value: The two best models with the best measurements 
+	'''
+	measurements = ['accuracy', 'precision', 'recall', 'roc_auc']
+	for i in range(len(measurements)):
+		print('--------------------------------')
+		print('Compare algorithms for', measurements[i])
+		results = []
+		means = []
+		stds = []
+		for model in models:
+			cv_result = cross_val_score(model.model, X, y, cv=10, scoring=measurements[i], n_jobs=-1)
+			results.append(cv_result)
+			mean = cv_result.mean()
+			std = cv_result.std()
+			means.append(mean)
+			stds.append(std)
+			print("Algorithm: {}. Mean: {}. Std:{}".format(model.modelName, cv_result.mean(), cv_result.std()))
+			if i == 0:
+				model.calc_overall(model.overall, mean * 0.15)
+			elif i == 0:
+				model.calc_overall(model.overall, mean * 0.15)
+			elif i == 2:
+				model.calc_overall(model.overall, mean * 0.25)
+			elif i == 3:
+				model.calc_overall(model.overall, mean * 0.45)
+		colors = ['r', 'g', 'b', 'y', 'c']
+		for j in range(len(results)):
+			mu = results[j].mean()
+			variance = results[j].std()
+			sigma = math.sqrt(variance)
+			x = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
+			plt.plot(x, stats.norm.pdf(x, mu, sigma), color=colors[j], label=models[j].modelName)
+			plt.title("Algorithm {} Comparison".format(measurements[i]))
+			plt.xlabel("Normal Distribution")
+			plt.legend(loc="upper left")
+		plt.show()
+
+	models.sort(key=lambda model: model.overall, reverse=True)
+	if models[0].modelName is 'DT':
+		return models[1:3]
+	return model[0:2]
+
+
+################################################################################
+##################################### MAIN #####################################
+################################################################################
 def main():
 	df = extract_data('./dataset/nasa.csv')
 	df = shuffle(df)
@@ -154,6 +206,10 @@ def main():
 	models.append(Model("KNN", KNeighborsClassifier()))
 	models.append(Model("GNN", GaussianNB()))
 	models.append(Model("DT", DecisionTreeClassifier()))
+
+	best_models = compare_models(X_res, y_res, models)
+	for model in best_models:
+		print(model.modelName)
 
 
 if __name__ == "__main__":
