@@ -89,6 +89,25 @@ def rescale_data(data):
 	# return StandardScaler().fit_transform(data)
 
 
+def get_k_selected_features_names(indices):
+	'''
+	Returns the features names
+	'''
+	features_dictionary = { "0" : "Neo Reference ID", "1" : "Name", "2" : "Absolute Magnitude", "3" : "Est Dia in KM(min)",
+	"4" : "Est Dia in KM(max)", "5" : "Close Approach Date", "6" : "Epoch Date Close Approach", "7" : "Relative Velocity km per hr",
+	"8" : "Miss Dist.(Astronomical)",  "9" : "Miss Dist.(lunar)", "10" : "Miss Dist.(kilometers)", "11" : "Orbiting Body",
+	"12" : "Orbit ID", "13" : "Orbit Determination Date", "14" : "Orbit Uncertainity", "15" : "Minimum Orbit Intersection",
+	"16" : "Jupiter Tisserand Invariant", "17" : "Epoch Osculation", "18" : "Eccentricity", "19" : "Semi Major Axis",
+	"20" : "Inclination", "21" : "Asc Node Longitude", "22" : "Orbital Period", "23" : "Perihelion Distance", "24" : "Perihelion Arg",
+	"25" : "Aphelion Dist", "26" : "Perihelion Time", "27" : "Mean Anomaly", "28" : "Mean Motion", "29" : "Equinox" }
+	
+	selected_features = []
+	for index in indices:
+		selected_features.append(features_dictionary['{}'.format(index)])
+
+	return selected_features
+
+
 def main():
 	df = extract_data('./dataset/nasa.csv')
 	df = shuffle(df)
@@ -120,12 +139,19 @@ def main():
 
 
 	# Select the best 15 features that gives the best indication of y
-	X_res = SelectKBest(f_classif, k=15).fit_transform(X_res, y_res)
+	selector = SelectKBest(f_classif, k=15)
+	X_res = selector.fit_transform(X_res, y_res)
+	
+	# Get columns to indentify which features were seleted by SelectKBest
+	selected_features_indices = selector.get_support(indices=True)
+	selected_features_names = get_k_selected_features_names(selected_features_indices)
+	print("The selected features are: {}".format(selected_features_names))
+
 	print("Dataset shape after feature selection: {}".format(Counter(y_res)))
 	print("Number of samples: {}".format(X_res.shape[0]))
 	print("Number of features: {}".format(X_res.shape[1]))
 	print("Ratio between classes: {}".format(y_res[y_res == True].shape[0] / y_res[y_res == False].shape[0]))
-
+	
 
 	# Prepare models:
 	models = []
