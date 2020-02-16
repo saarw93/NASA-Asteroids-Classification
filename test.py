@@ -89,22 +89,15 @@ def rescale_data(data):
 	# return StandardScaler().fit_transform(data)
 
 
-def get_k_selected_features_names(indices):
+def get_k_selected_features_names(indices, features):
 	'''
-	Returns the features names
-	'''
-	features_dictionary = { "0" : "Neo Reference ID", "1" : "Name", "2" : "Absolute Magnitude", "3" : "Est Dia in KM(min)",
-	"4" : "Est Dia in KM(max)", "5" : "Close Approach Date", "6" : "Epoch Date Close Approach", "7" : "Relative Velocity km per hr",
-	"8" : "Miss Dist.(Astronomical)",  "9" : "Miss Dist.(lunar)", "10" : "Miss Dist.(kilometers)", "11" : "Orbiting Body",
-	"12" : "Orbit ID", "13" : "Orbit Determination Date", "14" : "Orbit Uncertainity", "15" : "Minimum Orbit Intersection",
-	"16" : "Jupiter Tisserand Invariant", "17" : "Epoch Osculation", "18" : "Eccentricity", "19" : "Semi Major Axis",
-	"20" : "Inclination", "21" : "Asc Node Longitude", "22" : "Orbital Period", "23" : "Perihelion Distance", "24" : "Perihelion Arg",
-	"25" : "Aphelion Dist", "26" : "Perihelion Time", "27" : "Mean Anomaly", "28" : "Mean Motion", "29" : "Equinox" }
+	Parameters: features indices in csv, features names
 	
+	Return value: list of the k selected features names
+	'''	
 	selected_features = []
 	for index in indices:
-		selected_features.append(features_dictionary['{}'.format(index)])
-
+		selected_features.append(features[index])
 	return selected_features
 
 
@@ -144,7 +137,7 @@ def main():
 	
 	# Get columns to indentify which features were seleted by SelectKBest
 	selected_features_indices = selector.get_support(indices=True)
-	selected_features_names = get_k_selected_features_names(selected_features_indices)
+	selected_features_names = get_k_selected_features_names(selected_features_indices, features)
 	print("The selected features are: {}".format(selected_features_names))
 
 	print("Dataset shape after feature selection: {}".format(Counter(y_res)))
