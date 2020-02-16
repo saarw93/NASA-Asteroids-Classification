@@ -88,6 +88,18 @@ def rescale_data(data):
 	# return StandardScaler().fit_transform(data)
 
 
+def get_k_selected_features_names(indices, features):
+	'''
+	Parameters: features indices in csv, features names
+	
+	Return value: list of the k selected features names
+	'''	
+	selected_features = []
+	for index in indices:
+		selected_features.append(features[index])
+	return selected_features
+
+
 def main():
 	df = extract_data('./dataset/nasa.csv')
 	df = shuffle(df)
@@ -121,12 +133,19 @@ def main():
 
 
 	# Select the best 15 features that gives the best indication of y
-	X_res = SelectKBest(f_classif, k=15).fit_transform(X_res, y_res)
+	selector = SelectKBest(f_classif, k=15)
+	X_res = selector.fit_transform(X_res, y_res)
+	
+	# Get columns to indentify which features were seleted by SelectKBest
+	selected_features_indices = selector.get_support(indices=True)
+	selected_features_names = get_k_selected_features_names(selected_features_indices, features)
+	print("The selected features are: {}".format(selected_features_names))
+
 	print("Dataset shape after feature selection: {}".format(Counter(y_res)))
 	print("Number of samples: {}".format(X_res.shape[0]))
 	print("Number of features: {}".format(X_res.shape[1]))
 	print("Ratio between classes: {}".format(y_res[y_res == True].shape[0] / y_res[y_res == False].shape[0]))
-
+	
 
 	# Prepare models:
 	models = []
