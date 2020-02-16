@@ -17,7 +17,6 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.feature_selection import SelectKBest, f_classif
 
 from sklearn.utils import shuffle
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import NearMiss
@@ -94,6 +93,7 @@ def main():
 	df = shuffle(df)
 	features = df.columns.values
 
+
 	# Split to X-Matrix and y-Vector
 	X, y = split_matrix_vector(df)
 	print("Original dataset shape: {}".format(Counter(y)))
@@ -101,6 +101,7 @@ def main():
 	print("Number of features: {}".format(X.shape[1]))
 	print("Ratio between classes: {}".format(y[y == True].shape[0] / y[y == False].shape[0]))
 	
+
 	# Upscale data with SMOTE algorithm - ratio between classes is 1:2
 	# For example: over 2 samples of non-hazardous asteroids there is 1 sample of hazardous asteroid 
 	sm = SMOTE(sampling_strategy=0.5, random_state=42)
