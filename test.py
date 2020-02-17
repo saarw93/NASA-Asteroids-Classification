@@ -105,6 +105,7 @@ def main():
 	df = extract_data('./dataset/nasa.csv')
 	df = shuffle(df)
 	features = df.columns.values
+	print(features)
 
 	# Split to X-Matrix and y-Vector
 	X, y = split_matrix_vector(df)
@@ -137,6 +138,7 @@ def main():
 	
 	# Get columns to indentify which features were seleted by SelectKBest
 	selected_features_indices = selector.get_support(indices=True)
+	print(selected_features_indices)
 	selected_features_names = get_k_selected_features_names(selected_features_indices, features)
 	print("The selected features are: {}".format(selected_features_names))
 
