@@ -123,13 +123,13 @@ def compare_models(X, y, models):
 			means.append(mean)
 			stds.append(std)
 			print("Algorithm: {}. Mean: {}. Std:{}".format(model.modelName, cv_result.mean(), cv_result.std()))
-			if i == 0:
+			if i == 0: # accuracy
 				model.calc_overall(model.overall, mean * 0.15)
-			elif i == 0:
+			elif i == 1: # precision
 				model.calc_overall(model.overall, mean * 0.15)
-			elif i == 2:
+			elif i == 2: # recall
 				model.calc_overall(model.overall, mean * 0.25)
-			elif i == 3:
+			elif i == 3: # roc_auc
 				model.calc_overall(model.overall, mean * 0.45)
 		colors = ['r', 'g', 'b', 'y', 'c']
 		for j in range(len(results)):
@@ -142,11 +142,92 @@ def compare_models(X, y, models):
 			plt.xlabel("Normal Distribution")
 			plt.legend(loc="upper left")
 		plt.show()
-
+	print('--------------------------------')
 	models.sort(key=lambda model: model.overall, reverse=True)
-	if models[0].modelName is 'DT':
-		return models[1:3]
-	return model[0:2]
+	print("Best models")
+	if models[0].modelName is 'DT': # DT is overfitting
+		print("{}. Overall: {}".format(models[1].modelName, models[1].overall))
+		print("{}. Overall: {}".format(models[2].modelName, models[3].overall))
+	else:
+		print("{}. Overall: {}".format(models[0].modelName, models[0].overall))
+		print("{}. Overall: {}".format(models[1].modelName, models[1].overall))
+
+
+def compare_SVC_and_LR(X, y):
+	'''
+	Input: X-Matrix, y-Vector
+
+	Return value: Compare between LR and SVC with lambdas between 10**-6 and 10**6
+	'''
+	numOfLamda = 13
+	lambdas = []
+	lamda = 10**-6
+	scoreLR = []
+	scoreSVC = []
+	for i in range(numOfLamda):
+		print('Compare SVC and LR on lambda = {}'.format(lamda))
+		lambdas += [lamda]
+		modelLR = LogisticRegression(C=(1 / lamda), solver='liblinear', max_iter=1000000)
+		modelSVC = SVC(C=(1 / lamda), gamma='auto')
+		resultsLR = cross_val_score(modelLR, X, y, cv=10, scoring='roc_auc', n_jobs=-1)
+		resultsSVC = cross_val_score(modelSVC, X, y, cv=10, scoring='roc_auc', n_jobs=-1)
+		scoreLR += [resultsLR.mean()]
+		scoreSVC += [resultsSVC.mean()]
+		lamda *= 10
+		print('AUC for SVC: {}. AUC for LR: {}'.format(resultsSVC.mean(), resultsSVC.mean()))
+		print('--------------------------------')
+	
+	xi = [i for i in range(0, len(lambdas))]
+	plt.plot(xi, scoreLR, color="r", label="Logistic Regression")
+	plt.plot(xi, scoreSVC, color="b", label="SVC")
+	plt.xlabel("Lambda")
+	plt.ylabel("AUC Score")
+	plt.xticks(xi, lambdas)
+	plt.title("Lambda VS AUC Score")
+	plt.legend()
+	plt.show()
+	
+	bestLambda = lambdas[scoreSVC.index(max(scoreSVC))]
+	print('The best lambda is {}'.format(bestLambda))
+	
+	bestResultSVC = scoreSVC[lambdas.index(bestLambda)]
+	bestResultLR = scoreLR[lambdas.index(bestLambda)]
+	bestResult = bestResultSVC if bestResultSVC > bestResultLR else bestResultLR
+	
+	if bestResult == bestResultSVC:
+		print('The best model is SVC with AUC score: {} and lambda: {}'.format(bestResult, bestLambda))
+	elif bestResult == bestResultLR:
+		print('The best model is LR with AUC score: {} and lambda: {}'.format(bestResult, bestLambda))
+	
+	return bestLambda
+
+
+
+def compare_SVC_solvers(X, y, bestLambda):
+	'''
+	Input: X-Matrix, y-Vector
+
+	Return value: Compare between SVC with lambdas between 10**-6 and 10**6
+	'''
+	kernels = ['rbf', 'linear', 'poly', 'sigmoid']
+	colors = ['r', 'b', 'g', 'y']
+	gammas = ['auto', 'scale']
+	for gamma in gammas:
+		xi = [i for i in range(1, 11)]
+		for kernel in kernels:
+			print('Calculate gamma = {} with kernel = {}'.format(gamma, kernel))
+			model = SVC(gamma=gamma, kernel=kernel, C=(1 / bestLambda))
+			score = cross_val_score(model, X, y, cv=10, scoring='roc_auc', n_jobs=-1)
+			plt.plot(xi, score, color=colors[kernels.index(kernel)], label=kernel)
+			print('AUC: {}'.format(score.mean()))
+			print('--------------------------------')
+		
+		plt.xlabel('K segment')
+		plt.ylabel("AUC Score")
+		plt.xticks(xi, range(1, 11))
+		plt.title("K segment VS AUC Score, gamma = {}".format(gamma))
+		plt.legend()
+		plt.show()
 
 
 ################################################################################
@@ -165,7 +246,8 @@ def main():
 	print("Number of samples: {}".format(X.shape[0]))
 	print("Number of features: {}".format(X.shape[1]))
 	print("Ratio between classes: {}".format(y[y == True].shape[0] / y[y == False].shape[0]))
-	
+	print('--------------------------------')
+
 
 	# Upscale data with SMOTE algorithm - ratio between classes is 1:2
 	# For example: over 2 samples of non-hazardous asteroids there is 1 sample of hazardous asteroid 
@@ -175,7 +257,9 @@ def main():
 	print("Number of samples: {}".format(X_res.shape[0]))
 	print("Number of features: {}".format(X_res.shape[1]))
 	print("Ratio between classes: {}".format(y_res[y_res == True].shape[0] / y_res[y_res == False].shape[0]))
-	
+	print('--------------------------------')
+
+
 	# Downscale data with NearMiss algorithm - ratio between classes is 1:1
 	nm = NearMiss()
 	X_res, y_res = nm.fit_resample(X_res, y_res)
@@ -183,10 +267,11 @@ def main():
 	print("Number of samples: {}".format(X_res.shape[0]))
 	print("Number of features: {}".format(X_res.shape[1]))
 	print("Ratio between classes: {}".format(y_res[y_res == True].shape[0] / y_res[y_res == False].shape[0]))	
+	print('--------------------------------')
 
 
 	# Select the best 15 features that gives the best indication of y
-	selector = SelectKBest(f_classif, k=15)
+	selector = SelectKBest(f_classif, k=10)
 	X_res = selector.fit_transform(X_res, y_res)
 	
 	# Get columns to indentify which features were seleted by SelectKBest
@@ -194,12 +279,13 @@ def main():
 	print(selected_features_indices)
 	selected_features_names = get_k_selected_features_names(selected_features_indices, features)
 	print("The selected features are: {}".format(selected_features_names))
+	print('--------------------------------')
 
 	print("Dataset shape after feature selection: {}".format(Counter(y_res)))
 	print("Number of samples: {}".format(X_res.shape[0]))
 	print("Number of features: {}".format(X_res.shape[1]))
 	print("Ratio between classes: {}".format(y_res[y_res == True].shape[0] / y_res[y_res == False].shape[0]))
-	
+
 
 	# Prepare models:
 	models = []
@@ -209,9 +295,9 @@ def main():
 	models.append(Model("GNN", GaussianNB()))
 	models.append(Model("DT", DecisionTreeClassifier()))
 
-	best_models = compare_models(X_res, y_res, models)
-	for model in best_models:
-		print(model.modelName)
+	compare_models(X_res, y_res, models)
+	bestLambda = compare_SVC_and_LR(X_res, y_res)
+	compare_SVC_solvers(X_res, y_res, bestLambda)
 
 
 if __name__ == "__main__":
