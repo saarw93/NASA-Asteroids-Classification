@@ -296,8 +296,8 @@ def main():
 	models.append(Model("DT", DecisionTreeClassifier()))
 
 	compare_models(X_res, y_res, models)
-	bestLambda = compare_SVC_and_LR(X_res, y_res)
-	compare_SVC_solvers(X_res, y_res, bestLambda)
+	bestAlpha = compare_SVC_and_LR(X_res, y_res)
+	compare_SVC_solvers(X_res, y_res, bestAlpha)
 
 
 if __name__ == "__main__":
