@@ -293,7 +293,6 @@ def main():
 	models.append(Model("SVC", SVC(gamma='auto')))
 	models.append(Model("KNN", KNeighborsClassifier()))
 	models.append(Model("GNN", GaussianNB()))
-	models.append(Model("DT", DecisionTreeClassifier()))
 
 	compare_models(X_res, y_res, models)
 	bestAlpha = compare_SVC_and_LR(X_res, y_res)
