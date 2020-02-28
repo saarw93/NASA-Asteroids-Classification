@@ -145,12 +145,8 @@ def compare_models(X, y, models):
 	print('--------------------------------')
 	models.sort(key=lambda model: model.overall, reverse=True)
 	print("Best models")
-	if models[0].modelName is 'DT': # DT is overfitting
-		print("{}. Overall: {}".format(models[1].modelName, models[1].overall))
-		print("{}. Overall: {}".format(models[2].modelName, models[3].overall))
-	else:
-		print("{}. Overall: {}".format(models[0].modelName, models[0].overall))
-		print("{}. Overall: {}".format(models[1].modelName, models[1].overall))
+	print("{}. Overall: {}".format(models[0].modelName, models[0].overall))
+	print("{}. Overall: {}".format(models[1].modelName, models[1].overall))
 
 
 def compare_SVC_and_LR(X, y):
