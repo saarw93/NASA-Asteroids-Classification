@@ -13,7 +13,6 @@ from sklearn.preprocessing import StandardScaler, scale
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.feature_selection import SelectKBest, f_classif
@@ -87,7 +86,6 @@ def rescale_data(data):
 	Rescale data to standard distribution
 	'''
 	return scale(data)
-	# return StandardScaler().fit_transform(data)
 
 
 def get_k_selected_features_names(indices, features):
@@ -155,12 +153,12 @@ def compare_SVC_and_LR(X, y):
 
 	Return value: Compare between LR and SVC with alphas between 10**-6 and 10**6
 	'''
-	numOfLamda = 13
+	numOfAlpha = 13
 	alphas = []
 	alpha = 10**-6
 	scoreLR = []
 	scoreSVC = []
-	for i in range(numOfLamda):
+	for i in range(numOfAlpha):
 		print('Compare SVC and LR on aplha = {}'.format(alpha))
 		alphas += [alpha]
 		modelLR = LogisticRegression(C=(1 / alpha), solver='liblinear', max_iter=1000000)
@@ -183,19 +181,19 @@ def compare_SVC_and_LR(X, y):
 	plt.legend()
 	plt.show()
 	
-	bestLambda = alphas[scoreSVC.index(max(scoreSVC))]
-	print('The best alpha is {}'.format(bestLambda))
+	bestAlpha = alphas[scoreSVC.index(max(scoreSVC))]
+	print('The best alpha is {}'.format(bestAlpha))
 	
-	bestResultSVC = scoreSVC[alphas.index(bestLambda)]
-	bestResultLR = scoreLR[alphas.index(bestLambda)]
+	bestResultSVC = scoreSVC[alphas.index(bestAlpha)]
+	bestResultLR = scoreLR[alphas.index(bestAlpha)]
 	bestResult = bestResultSVC if bestResultSVC > bestResultLR else bestResultLR
 	
 	if bestResult == bestResultSVC:
-		print('The best model is SVC with AUC score: {} and alpha: {}'.format(bestResult, bestLambda))
+		print('The best model is SVC with AUC score: {} and alpha: {}'.format(bestResult, bestAlpha))
 	elif bestResult == bestResultLR:
-		print('The best model is LR with AUC score: {} and alpha: {}'.format(bestResult, bestLambda))
+		print('The best model is LR with AUC score: {} and alpha: {}'.format(bestResult, bestAlpha))
 	
-	return bestLambda
+	return bestAlpha
 
 
 
@@ -266,7 +264,7 @@ def main():
 	print('--------------------------------')
 
 
-	# Select the best k features that gives the best indication of y
+	# Select the best k features that gives the best indication of y:
 	# selector = SelectKBest(f_classif, k=10)
 	# X_res = selector.fit_transform(X_res, y_res)
 	
