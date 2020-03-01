@@ -159,7 +159,7 @@ def compare_SVC_and_LR(X, y):
 	scoreLR = []
 	scoreSVC = []
 	for i in range(numOfAlpha):
-		print('Compare SVC and LR on aplha = {}'.format(alpha))
+		print('Compare SVC and LR on alpha = {}'.format(alpha))
 		alphas += [alpha]
 		modelLR = LogisticRegression(C=(1 / alpha), solver='liblinear', max_iter=1000000)
 		modelSVC = SVC(C=(1 / alpha), gamma='auto')
@@ -192,7 +192,7 @@ def compare_SVC_and_LR(X, y):
 		print('The best model is SVC with AUC score: {} and alpha: {}'.format(bestResult, bestAlpha))
 	elif bestResult == bestResultLR:
 		print('The best model is LR with AUC score: {} and alpha: {}'.format(bestResult, bestAlpha))
-	
+	print("--------------------------------")
 	return bestAlpha
 
 
@@ -206,6 +206,7 @@ def compare_SVC_solvers(X, y, bestAlpha):
 	kernels = ['rbf', 'linear', 'poly', 'sigmoid']
 	colors = ['r', 'b', 'g', 'y']
 	gammas = ['auto', 'scale']
+	aucs = []
 	for gamma in gammas:
 		xi = [i for i in range(1, 11)]
 		for kernel in kernels:
@@ -213,9 +214,11 @@ def compare_SVC_solvers(X, y, bestAlpha):
 			model = SVC(gamma=gamma, kernel=kernel, C=(1 / bestAlpha))
 			score = cross_val_score(model, X, y, cv=10, scoring='roc_auc', n_jobs=-1)
 			plt.plot(xi, score, color=colors[kernels.index(kernel)], label=kernel)
+			aucs.append(score.mean())
 			print('AUC: {}'.format(score.mean()))
 			print('--------------------------------')
-		
+
+		best_kernel_index = aucs.index(max(aucs))
 		plt.xlabel('K segment')
 		plt.ylabel("AUC Score")
 		plt.xticks(xi, range(1, 11))
@@ -223,6 +226,10 @@ def compare_SVC_solvers(X, y, bestAlpha):
 		plt.legend()
 		plt.show()
 
+	if best_kernel_index > 3: #scale gamma is better than auto gamma
+		print('The best kernel for SVC model is {} with gamma scale'.format(kernels[best_kernel_index - 4]))
+	else:
+		print('The best kernel for SVC model is {} with gamma auto'.format(kernels[best_kernel_index]))
 
 ################################################################################
 ##################################### MAIN #####################################
