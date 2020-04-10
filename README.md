@@ -6,6 +6,7 @@ We were asked to pick interesting data, analyze it, learn about it by using diff
 We divided this work into several parts: at first, we compared several different learning algorithms without changing the parameters. Then, we compared the 2 algorithms that gave the best results for the measures we chose, using different alphas, and finally, we tested different parameters for the algorithm that gave us the best results for the data.
 
 The algorithms we used in this project:
+
 Balance the data:
 1. SMOTE (Upscaling)
 2. Near Miss (Downscaling)
